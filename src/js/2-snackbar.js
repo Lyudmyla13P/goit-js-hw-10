@@ -1,53 +1,65 @@
 import iziToast from 'izitoast';
 import 'izitoast/dist/css/iziToast.min.css';
-// ========================================================================== ^ import ^
-const formEl = document.querySelector('.form');
-// ========================================================================== ^ var ^
-formEl.addEventListener('submit', handleShowPromise);
 
-function handleShowPromise(evt) {
-  evt.preventDefault();
-  const delay = formEl.elements.delay.value;
-  const radioValue = formEl.elements.state.value;
-  function showPromise(time, value) {
-    return new Promise((res, rej) => {
+import errorIcon from '../img/error.svg';
+import okIcon from '../img/ok.svg';
+
+const form = document.querySelector('.form');
+
+form.addEventListener('submit', handlePromiseGenerator);
+
+function handlePromiseGenerator(e) {
+  e.preventDefault();
+
+  const delay = form.elements.delay.value;
+  const state = form.elements.state.value;
+
+  const makePromise = (delayValue, stateValue) => {
+    return new Promise((resolve, reject) => {
       setTimeout(() => {
-        if (value === 'fulfilled') {
-          res(time);
+        if (stateValue === 'fulfilled') {
+          resolve(delayValue);
+        } else {
+          reject(delayValue);
         }
-        rej(time);
       }, delay);
-      formEl.reset();
+      form.reset();
     });
-  }
-  showPromise(delay, radioValue)
-    .then(positive => {
-      iziToast.success({
-        message: `✅ Fulfilled promise in ${positive}ms`,
+  };
+
+  makePromise(delay, state)
+    .then(succecs => {
+      iziToast.show({
         title: 'OK',
-        icon: '',
-        backgroundColor: '#59A10D',
-        titleColor: '#ffffff',
-        messageColor: '#ffffff',
-        close: false,
+        titleColor: '#fff',
+        titleSize: '16px',
+
+        message: `Fulfilled promise in ${delay}ms`,
+        messageColor: '#fff',
+        messageSize: '16px',
+
+        iconUrl: okIcon,
+
         position: 'topRight',
-        titleSize: 16,
-        messageSize: 16,
+        backgroundColor: '#59a10d',
       });
+      console.log(`Fulfilled promise in ${delay}ms`);
     })
-    .catch(negative => {
-      iziToast.error({
+    .catch(error => {
+      iziToast.show({
         title: 'Error',
-        message: `❌ Rejected promise in ${negative}ms`,
-        icon: '',
-        backgroundColor: '#EF4040',
-        titleColor: '#ffffff',
-        messageColor: '#ffffff',
-        close: false,
+        titleColor: '#fff',
+        titleSize: '16px',
+
+        message: `Rejected promise in ${delay}ms`,
+        messageColor: '#fff',
+        messageSize: '16px',
+
+        iconUrl: errorIcon,
+
         position: 'topRight',
-        titleSize: 16,
-        messageSize: 16,
+        backgroundColor: '#ef4040',
       });
+      console.log(`Rejected promise in ${delay}ms`);
     });
 }
-// ========================================================================== ^ create promise ^
