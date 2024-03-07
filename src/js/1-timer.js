@@ -1,109 +1,108 @@
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
+
 import iziToast from 'izitoast';
 import 'izitoast/dist/css/iziToast.min.css';
-import cross from '../img/error.svg';
-// ====================================================================================^ import ^
+
+import errorIcon from '../img/error.svg';
+
+const inputData = document.querySelector('#datetime-picker');
+const btnStart = document.querySelector('button[data-start]');
+const timerDays = document.querySelector('.value[data-days]');
+const timerHours = document.querySelector('.value[data-hours]');
+const timerMinutes = document.querySelector('.value[data-minutes]');
+const timerSeconds = document.querySelector('.value[data-seconds]');
+
 let userSelectedDate;
-let changeDateValue;
-const inputValueTimer = document.querySelector('#datetime-picker');
-const startBtn = document.querySelector('button[data-start]');
-const dataValueDays = document.querySelector('span[data-days]');
-const dataValueHours = document.querySelector('span[data-hours]');
-const dataValueMinutes = document.querySelector('span[data-minutes]');
-const dataValueSeconds = document.querySelector('span[data-seconds]');
-// ===================================================================================== ^ variables ^
-startBtn.setAttribute('disabled', '');
-startBtn.classList.add('disabled-btn');
-inputValueTimer.classList.add('input-check');
-// ================================================================================ ^ defolt view items ^
+
 const options = {
   enableTime: true,
   time_24hr: true,
   defaultDate: new Date(),
   minuteIncrement: 1,
   onClose(selectedDates) {
-    if (selectedDates[0] < Date.now()) {
-      iziToast.show({
-        iconUrl: cross,
+    if (selectedDates[0] <= Date.now()) {
+      iziToast.error({
         title: 'Error',
-        titleColor: '#ffffff',
-        messageColor: '#ffffff',
+        titleColor: '#fff',
+        titleSize: '16px',
+
         message: 'Please choose a date in the future',
-        backgroundColor: '#EF4040',
+        messageColor: '#fff',
+        messageSize: '16px',
+
+        iconUrl: errorIcon,
+
         position: 'topRight',
-        titleSize: 16,
-        messageSize: 16,
-        maxWidth: 902,
-        close: false,
+        backgroundColor: '#ef4040',
       });
-      startBtn.classList.add('disabled-btn');
-      startBtn.classList.remove('active-btn');
-      startBtn.setAttribute('disabled', '');
+
+      btnStart.classList.add('disabled');
+      btnStart.setAttribute('disabled', '');
     } else {
-      startBtn.removeAttribute('disabled');
-      inputValueTimer.classList.add('input-disabled');
-      startBtn.classList.add('active-btn');
-      startBtn.classList.remove('disabled-btn');
-      userSelectedDate = selectedDates[0];
+      btnStart.classList.remove('disabled');
+      btnStart.removeAttribute('disabled');
+
+      userSelectedDate = selectedDates[0].getTime();
     }
   },
 };
 
-const fp = flatpickr('#datetime-picker', options);
-// ========================================================= ^ check past/future time + library flatpickr ^
+onBtnDisabled();
+flatpickr('#datetime-picker', options);
+btnStart.addEventListener('click', onCountdownTime);
+
+function onCountdownTime() {
+  onBtnDisabled();
+  onInputDisabled();
+
+  const interval = setInterval(() => {
+    const countdownTime = userSelectedDate - Date.now();
+
+    if (countdownTime <= 0) {
+      return clearInterval(interval);
+    }
+
+    onTimerInterface(convertMs(countdownTime));
+  }, 1000);
+}
+
+function onBtnDisabled() {
+  btnStart.classList.add('disabled');
+  btnStart.setAttribute('disabled', '');
+}
+
+function onInputDisabled() {
+  inputData.classList.add('disabled');
+  inputData.setAttribute('disabled', '');
+}
 
 function convertMs(ms) {
+  // Number of milliseconds per unit of time
   const second = 1000;
   const minute = second * 60;
   const hour = minute * 60;
   const day = hour * 24;
 
+  // Remaining days
   const days = Math.floor(ms / day);
-
+  // Remaining hours
   const hours = Math.floor((ms % day) / hour);
-
+  // Remaining minutes
   const minutes = Math.floor(((ms % day) % hour) / minute);
-
+  // Remaining seconds
   const seconds = Math.floor((((ms % day) % hour) % minute) / second);
 
   return { days, hours, minutes, seconds };
 }
-// =====================================================================================^ convert ms ^
+
+function onTimerInterface({ days, hours, minutes, seconds }) {
+  timerDays.innerHTML = addLeadingZero(days);
+  timerHours.innerHTML = addLeadingZero(hours);
+  timerMinutes.innerHTML = addLeadingZero(minutes);
+  timerSeconds.innerHTML = addLeadingZero(seconds);
+}
 
 function addLeadingZero(value) {
-  if (value < 10) {
-    return String(value).padStart(2, '0');
-  } else {
-    return value;
-  }
+  return String(value).padStart(2, '0');
 }
-// ==================================================================================== ^ update value ^
-
-function updateTimerValue() {
-  const delta = userSelectedDate - Date.now();
-  if (delta <= 0) {
-    clearInterval(changeDateValue);
-    return;
-  }
-  startBtn.classList.add('disabled-btn');
-  startBtn.classList.remove('active-btn');
-  startBtn.setAttribute('disabled', '');
-  inputValueTimer.setAttribute('disabled', '');
-  inputValueTimer.classList.remove('input-check');
-
-  const { days, hours, minutes, seconds } = convertMs(delta);
-
-  dataValueDays.textContent = addLeadingZero(days);
-  dataValueHours.textContent = addLeadingZero(hours);
-  dataValueMinutes.textContent = addLeadingZero(minutes);
-  dataValueSeconds.textContent = addLeadingZero(seconds);
-}
-// ====================================================== ^ change timer value + change defolt view items ^
-startBtn.addEventListener('click', handleStartUpdateTimerValue);
-
-function handleStartUpdateTimerValue() {
-  updateTimerValue();
-  changeDateValue = setInterval(updateTimerValue, 1000);
-}
-// ============================================================================= ^ start timer ^
