@@ -1,65 +1,38 @@
 import iziToast from 'izitoast';
 import 'izitoast/dist/css/iziToast.min.css';
 
-import errorIcon from '../img/error.svg';
-import okIcon from '../img/ok.svg';
-
 const form = document.querySelector('.form');
 
-form.addEventListener('submit', handlePromiseGenerator);
+form.addEventListener('submit', createPromise);
 
-function handlePromiseGenerator(e) {
-  e.preventDefault();
+function createPromise(event) {
+  event.preventDefault();
+  let delay = form.elements.delay.value;
+  let state = form.elements.state.value;
 
-  const delay = form.elements.delay.value;
-  const state = form.elements.state.value;
+  const promise = new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (state === 'fulfilled') {
+        resolve(`✅ Fulfilled promise in ${delay}ms`);
+      } else {
+        reject(`❌ Rejected promise in ${delay}ms`);
+      }
+    }, delay);
+  });
 
-  const makePromise = (delayValue, stateValue) => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        if (stateValue === 'fulfilled') {
-          resolve(delayValue);
-        } else {
-          reject(delayValue);
-        }
-      }, delay);
-      form.reset();
-    });
-  };
-
-  makePromise(delay, state)
-    .then(succecs => {
-      iziToast.show({
-        title: 'OK',
-        titleColor: '#fff',
-        titleSize: '16px',
-
-        message: `Fulfilled promise in ${delay}ms`,
-        messageColor: '#fff',
-        messageSize: '16px',
-
-        iconUrl: okIcon,
-
+  promise
+    .then(result => {
+      iziToast.success({
         position: 'topRight',
-        backgroundColor: '#59a10d',
+        message: result,
       });
-      console.log(`Fulfilled promise in ${delay}ms`);
     })
     .catch(error => {
-      iziToast.show({
-        title: 'Error',
-        titleColor: '#fff',
-        titleSize: '16px',
-
-        message: `Rejected promise in ${delay}ms`,
-        messageColor: '#fff',
-        messageSize: '16px',
-
-        iconUrl: errorIcon,
-
+      iziToast.error({
         position: 'topRight',
-        backgroundColor: '#ef4040',
+        message: error,
       });
-      console.log(`Rejected promise in ${delay}ms`);
     });
+
+  form.reset();
 }
