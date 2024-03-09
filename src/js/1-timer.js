@@ -1,19 +1,7 @@
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
-
 import iziToast from 'izitoast';
 import 'izitoast/dist/css/iziToast.min.css';
-
-import errorIcon from '../img/error.svg';
-
-const inputData = document.querySelector('#datetime-picker');
-const btnStart = document.querySelector('button[data-start]');
-const timerDays = document.querySelector('.value[data-days]');
-const timerHours = document.querySelector('.value[data-hours]');
-const timerMinutes = document.querySelector('.value[data-minutes]');
-const timerSeconds = document.querySelector('.value[data-seconds]');
-
-let userSelectedDate;
 
 const options = {
   enableTime: true,
@@ -21,88 +9,71 @@ const options = {
   defaultDate: new Date(),
   minuteIncrement: 1,
   onClose(selectedDates) {
-    if (selectedDates[0] <= Date.now()) {
+    const userSelectedDate = selectedDates[0];
+
+    if (userSelectedDate < new Date()) {
       iziToast.error({
-        title: 'Error',
-        titleColor: '#fff',
-        titleSize: '16px',
-
-        message: 'Please choose a date in the future',
-        messageColor: '#fff',
-        messageSize: '16px',
-
-        iconUrl: errorIcon,
-
         position: 'topRight',
-        backgroundColor: '#ef4040',
+        title: 'Error',
+        message: 'Please choose a date in the future',
       });
-
-      btnStart.classList.add('disabled');
-      btnStart.setAttribute('disabled', '');
+      document.querySelector('[data-start]').disabled = true;
     } else {
-      btnStart.classList.remove('disabled');
-      btnStart.removeAttribute('disabled');
-
-      userSelectedDate = selectedDates[0].getTime();
+      document.querySelector('[data-start]').disabled = false;
     }
   },
 };
 
-onBtnDisabled();
 flatpickr('#datetime-picker', options);
-btnStart.addEventListener('click', onCountdownTime);
 
-function onCountdownTime() {
-  onBtnDisabled();
-  onInputDisabled();
+document.querySelector('[data-start]').addEventListener('click', () => {
+  const endDate = new Date(
+    document.querySelector('#datetime-picker').value
+  ).getTime();
 
-  const interval = setInterval(() => {
-    const countdownTime = userSelectedDate - Date.now();
+  document.querySelector('#datetime-picker').disabled = true;
+  document.querySelector('[data-start]').disabled = true;
 
-    if (countdownTime <= 0) {
-      return clearInterval(interval);
+  const timerInterval = setInterval(() => {
+    const currentTime = new Date().getTime();
+    const timeDifference = endDate - currentTime;
+
+    if (timeDifference <= 0) {
+      clearInterval(timerInterval);
+      updateTimerDisplay({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+      iziToast.success({
+        position: 'topRight',
+      });
+    } else {
+      const timeObject = convertMs(timeDifference);
+      updateTimerDisplay(timeObject);
     }
-
-    onTimerInterface(convertMs(countdownTime));
   }, 1000);
+});
+
+function updateTimerDisplay({ days, hours, minutes, seconds }) {
+  const updateElement = (selector, value) => {
+    document.querySelector(selector).textContent = addLeadingZero(value);
+  };
+
+  updateElement('[data-days]', days);
+  updateElement('[data-hours]', hours);
+  updateElement('[data-minutes]', minutes);
+  updateElement('[data-seconds]', seconds);
 }
 
-function onBtnDisabled() {
-  btnStart.classList.add('disabled');
-  btnStart.setAttribute('disabled', '');
-}
-
-function onInputDisabled() {
-  inputData.classList.add('disabled');
-  inputData.setAttribute('disabled', '');
-}
+const addLeadingZero = value => (value < 10 ? `0${value}` : value);
 
 function convertMs(ms) {
-  // Number of milliseconds per unit of time
   const second = 1000;
   const minute = second * 60;
   const hour = minute * 60;
   const day = hour * 24;
 
-  // Remaining days
   const days = Math.floor(ms / day);
-  // Remaining hours
   const hours = Math.floor((ms % day) / hour);
-  // Remaining minutes
   const minutes = Math.floor(((ms % day) % hour) / minute);
-  // Remaining seconds
   const seconds = Math.floor((((ms % day) % hour) % minute) / second);
 
   return { days, hours, minutes, seconds };
-}
-
-function onTimerInterface({ days, hours, minutes, seconds }) {
-  timerDays.innerHTML = addLeadingZero(days);
-  timerHours.innerHTML = addLeadingZero(hours);
-  timerMinutes.innerHTML = addLeadingZero(minutes);
-  timerSeconds.innerHTML = addLeadingZero(seconds);
-}
-
-function addLeadingZero(value) {
-  return String(value).padStart(2, '0');
 }
