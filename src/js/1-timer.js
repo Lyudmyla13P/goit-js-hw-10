@@ -2,7 +2,7 @@ import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
 import iziToast from 'izitoast';
 import 'izitoast/dist/css/iziToast.min.css';
-import cross from '../img/error.svg';
+import cross from '.src/js/1-timer.js';
 // ====================================================================================^ import ^
 let userSelectedDate;
 let changeDateValue;
